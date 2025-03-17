@@ -1,0 +1,196 @@
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #6de1d7;
+            margin: 0;
+        }
+        .calculator {
+            width: 300px;
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 1);
+            padding: 20px;
+        }
+        .display {
+            width: 100%;
+            height: 50px;
+            text-align: right;
+            font-size: 1.5rem;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: none;
+            background-color: #000000;
+            border-radius: 8px;
+            color: #e7e7e7;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .button {
+            background-color: #0c2a37;
+            border: none;
+            font-size: 1.5rem;
+            padding: 20px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: background-color 0.3s, transform 0.2s;
+            color: white;
+        }
+        .button:hover {
+            background-color: rgb(193, 193, 193);
+            transform: scale(1.1);
+        }
+        .button:active {
+            transform: scale(0.95);
+        }
+        .button.clear {
+            background-color: #4f1313;
+        }
+        .button.clear:hover {
+            background-color: #b75b5b;
+        }
+        .button.equal {
+            background-color: #4f1313;
+        }
+        .button.equal:hover {
+            background-color: #b75b5b;
+        }
+        .button.operator {
+            background-color: #4f1313;
+        }
+        .button.operator:hover {
+            background-color: #b75b5b;
+        }
+        .button.parenthesis {
+            background-color: #4f1313;
+        }
+        .button.parenthesis:hover {
+            background-color: #b75b5b;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <input type="text" id="display" class="display" disabled>
+        <div class="buttons">
+            <button class="button clear" onclick="clearDisplay()">C</button>
+            <button class="button operator" onclick="appendOperation('/')">/</button>
+            <button class="button operator" onclick="appendOperation('*')">*</button>
+            <button class="button operator" onclick="appendOperation('-')">-</button>
+            <button class="button operator" onclick="appendOperation('+')">+</button>
+            <button class="button equal" onclick="calculate()">=</button>
+            <button class="button operator" onclick="appendOperation('(')">(</button>
+            <button class="button operator" onclick="appendOperation(')')">)</button>
+            <button class="button" onclick="appendNumber('7')">7</button>
+            <button class="button" onclick="appendNumber('8')">8</button>
+            <button class="button" onclick="appendNumber('9')">9</button>
+
+            <button class="button" onclick="appendNumber('4')">4</button>
+            <button class="button" onclick="appendNumber('5')">5</button>
+            <button class="button" onclick="appendNumber('6')">6</button>
+            <button class="button" onclick="appendNumber('1')">1</button>
+            <button class="button" onclick="appendNumber('2')">2</button>
+            <button class="button" onclick="appendNumber('3')">3</button>
+            <button class="button" onclick="appendNumber('0')">0</button>
+        
+        </div>
+    </div>
+
+    <script>
+        class Node {
+            constructor(val = null, left = null, right = null) {
+                this.val = val;
+                this.left = left;
+                this.right = right;
+            }
+    }
+        let currentInput = '';
+        let currentOperation = '';
+        let previousInput = '';
+
+    function appendNumber(number) {
+        document.getElementById('display').value += number;
+}
+
+function appendOperation(operation) {
+    document.getElementById('display').value += operation;
+}
+
+        function calculate() {
+    let expression = document.getElementById('display').value;
+    let tokens = tokenize(expression);
+    let tree = buildExpressionTree(tokens);
+    let result = evaluateExpressionTree(tree);
+    
+    document.getElementById('display').value = result;
+}
+function tokenize(expression) {
+    return expression.match(/(\d+|\+|\-|\*|\/|\(|\))/g);
+}
+function buildExpressionTree(tokens) {
+    let values = [];  
+    let operators = [];  
+    
+    function applyOperator() {
+        let operator = operators.pop();
+        let right = values.pop();
+        let left = values.pop();
+        values.push(new Node(operator, left, right));
+    }
+    
+    let precedence = { '+': 1, '-': 1, '*': 2, '/': 2 };
+
+    for (let token of tokens) {
+        if (!isNaN(token)) {
+            values.push(new Node(parseFloat(token)));
+        } else if (token in precedence) {
+            while (operators.length && precedence[operators[operators.length - 1]] >= precedence[token]) {
+                applyOperator();
+            }
+            operators.push(token);
+        } else if (token === '(') {
+            operators.push(token);
+        } else if (token === ')') {
+            while (operators.length && operators[operators.length - 1] !== '(') {
+                applyOperator();
+            }
+            operators.pop();
+        }
+    }
+    
+    while (operators.length) {
+        applyOperator();
+    }
+    
+    return values.pop();
+}
+function evaluateExpressionTree(node) {
+    if (!node.left && !node.right) {
+        return node.val;
+    }
+    
+    let leftValue = evaluateExpressionTree(node.left);
+    let rightValue = evaluateExpressionTree(node.right);
+    
+    switch (node.val) {
+        case '+': return leftValue + rightValue;
+        case '-': return leftValue - rightValue;
+        case '*': return leftValue * rightValue;
+        case '/': return rightValue === 0 ? "Error: Division by Zero" : leftValue / rightValue;
+    }
+}
+
+function clearDisplay() {
+    document.getElementById('display').value = '';
+}
+    </script>
+</body>
+</html>
